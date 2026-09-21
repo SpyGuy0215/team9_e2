@@ -1,0 +1,7 @@
+config SERVO_MOTOR
+	bool "Custom Servo Motor driver"
+	default y
+	depends on DT_HAS_CUSTOM_SERVO_MOTOR_ENABLED
+	select PWM
+	help
+	  Enable custom device driver for PWM-controlled hobby servo motors.

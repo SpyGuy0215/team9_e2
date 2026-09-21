@@ -1,0 +1,21 @@
+description: Custom PWM-based Servo Motor driver
+
+compatible: "custom,servo-motor"
+
+include: base.yaml
+
+properties:
+  pwms:
+    type: phandle-array
+    required: true
+    description: Specifier for the PWM channel driving the servo.
+
+  min-pulse-us:
+    type: int
+    default: 1000
+    description: Minimum pulse width in microseconds (corresponding to 0 degrees).
+
+  max-pulse-us:
+    type: int
+    default: 2000
+    description: Maximum pulse width in microseconds (corresponding to 180 degrees).

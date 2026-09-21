@@ -1,10 +1,9 @@
 / {
     aliases {
         led0 = &blink_led;
-        servo-pwm = &servo_pwm; 
     };
 
-    /* Insantiate custom RGB Drivers */
+    /* Instantiate custom RGB Drivers */
     rgb_led0: rgb-led-0 {
         compatible = "custom,rgb-led";
         gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>,  /* Red LED Pin */
@@ -20,12 +19,13 @@
         };
     };
 
-    servo {
-        compatible = "pwm-leds";
-
-        servo_pwm: servo_0 {
-            pwms = <&ledc0 0 PWM_HZ(50) PWM_POLARITY_NORMAL>;
-        };
+    /* Instantiate custom servo drivers */
+    servo0: servo_motor {
+        compatible = "custom,servo-motor";
+        pwms = <&ledc0 0 PWM_HZ(50) PWM_POLARITY_NORMAL>;
+        min-pulse-us = <1000>;
+        max-pulse-us = <2000>;
+        status = "okay";
     };
 };
 
