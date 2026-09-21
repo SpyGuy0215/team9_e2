@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "app_queues.h"
 #include "parser.h"
 
@@ -56,7 +57,26 @@ void parser_thread_entry(void *p1, void *p2, void *p3){
             }
         }
         else{
-            printk("[Parser] Unrecognized command: %s\n", line);
+            char *end;
+            errno = 0;
+            long angle = strtol(line, &end, 10);
+
+            while (isspace((unsigned char)*end)) {
+                end++;
+            }
+
+            if (line[0] != '\0' && *end == '\0' && errno == 0 &&
+                angle >= 0 && angle <= 180) {
+                struct servo_cmd cmd = {.angle = (uint16_t)angle};
+
+                if (k_msgq_put(&servo_msgq, &cmd, K_NO_WAIT) != 0) {
+                    printk("[Parser] Warning: Servo queue full, dropping command\n");
+                } else {
+                    printk("[Parser] Servo command queued: angle=%u\n", cmd.angle);
+                }
+            } else {
+                printk("[Parser] Invalid or unrecognized command: %s\n", line);
+            }
         }
     }
 }

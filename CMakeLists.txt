@@ -7,5 +7,6 @@ target_sources(app PRIVATE
     src/main.c
     src/system_zero.c
     src/system_one.c
+    src/system_two.c
     src/parser.c
 )

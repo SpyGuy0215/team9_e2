@@ -4,6 +4,7 @@
         led-red = &red_led;
         led-green = &green_led;
         led-blue = &blue_led; 
+        servo-pwm = &servo_pwm; 
     };
 
     leds {
@@ -23,6 +24,30 @@
         blue_led: led_3 {
             gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
             label = "Blue LED";
+        };
+    };
+
+    servo {
+        compatible = "pwm-leds";
+
+        servo_pwm: servo_0 {
+            pwms = <&ledc0 0 PWM_HZ(50) PWM_POLARITY_NORMAL>;
+        };
+    };
+};
+
+/* Enable ESP32 hardware controller ledc0 */
+&ledc0 {        
+    pinctrl-0 = <&ledc0_default>;
+    pinctrl-names = "default"; 
+    status = "okay"; 
+};
+
+/* Pin control mapping (Assign GPIO pin for servo PWM output) */
+&pinctrl {
+    ledc0_default: ledc0_default {
+        group1 {
+            pinmux = <LEDC_CH0_GPIO13>;
         };
     };
 };
