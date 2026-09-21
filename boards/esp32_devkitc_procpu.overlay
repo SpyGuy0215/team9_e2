@@ -1,0 +1,28 @@
+/ {
+    aliases {
+        led0 = &blink_led;
+        led-red = &red_led;
+        led-green = &green_led;
+        led-blue = &blue_led; 
+    };
+
+    leds {
+        compatible = "gpio-leds";
+        blink_led: led_0 {
+            gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+            label = "Board LED";
+        };
+        red_led: led_1 {
+            gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+            label = "Red LED";
+        };
+        green_led: led_2 {
+            gpios = <&gpio0 18 GPIO_ACTIVE_HIGH>;
+            label = "Green LED"; 
+        };
+        blue_led: led_3 {
+            gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+            label = "Blue LED";
+        };
+    };
+};
