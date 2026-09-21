@@ -1,0 +1,11 @@
+description: Custom GPIO RGB LED set Driver
+
+compatible: "custom,rgb-led"
+
+include: base.yaml
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: Array of 3 GPIO specs ordered as [Red, Green, Blue].

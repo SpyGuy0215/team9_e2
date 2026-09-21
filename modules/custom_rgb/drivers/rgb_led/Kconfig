@@ -1,0 +1,7 @@
+config CUSTOM_RGB_LED
+	bool "Custom RGB LED Driver"
+	default y
+	depends on DT_HAS_CUSTOM_RGB_LED_ENABLED
+	select GPIO
+	help
+	  Enable support for custom RGB LED driver modules.
