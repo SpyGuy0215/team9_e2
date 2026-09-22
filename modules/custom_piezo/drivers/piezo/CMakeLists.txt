@@ -1,2 +1,4 @@
 zephyr_library()
-zephyr_library_sources(custom_piezo.c)
+zephyr_library_sources(
+	custom_piezo.c
+)

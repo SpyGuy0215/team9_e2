@@ -22,9 +22,9 @@ void system_three_entry(void *p1, void *p2, void *p3)
 
 	while (1) {
 		if (k_msgq_get(&piezo_msgq, &cmd, K_FOREVER) == 0) {
-			printk("[System Three] Playing 660Hz tone for %u seconds...\n",
+			printk("[System Three] Playing 440Hz tone for %u seconds...\n",
 			       cmd.duration_seconds);
-			custom_piezo_play(piezo_dev, 660, cmd.duration_seconds * 1000U);
+			custom_piezo_play(piezo_dev, 440, cmd.duration_seconds * 1000U);
 		}
 	}
 }

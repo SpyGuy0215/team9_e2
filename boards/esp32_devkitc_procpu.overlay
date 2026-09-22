@@ -32,7 +32,7 @@
     piezo0: piezo {
         compatible = "custom,piezo-dac";
         status = "okay";
-        pwms = <&ledc0 1 PWM_HZ(1000) PWM_POLARITY_NORMAL>;
+        io-channels = <&dac 0>;
     };
 
     usart0: system-four-usart {
@@ -65,7 +65,12 @@
 &pinctrl {
     ledc0_default: ledc0_default {
         group1 {
-            pinmux = <LEDC_CH0_GPIO27>, <LEDC_CH1_GPIO25>;
+            pinmux = <LEDC_CH0_GPIO27>;
         };
     };
+};
+
+/* Enable ESP32 DAC channel 0 on GPIO25 for the piezo output. */
+&dac {
+    status = "okay";
 };

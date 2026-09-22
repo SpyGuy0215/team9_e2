@@ -2,7 +2,7 @@ description: Custom Piezo DAC Buzzer
 compatible: "custom,piezo-dac"
 include: base.yaml
 properties:
-  pwms:
+  io-channels:
     type: phandle-array
     required: true
-    description: PWM channel connected to the passive piezo buzzer
+    description: ESP32 DAC channel connected to the passive piezo buzzer

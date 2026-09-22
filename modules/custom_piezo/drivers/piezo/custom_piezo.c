@@ -3,13 +3,20 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/pwm.h>
+#include <zephyr/drivers/dac.h>
+#include <soc/soc_caps.h>
+#include <soc/gpio_num.h>
+#include <hal/clk_tree_ll.h>
+#include <hal/dac_ll.h>
+#include <hal/dac_types.h>
+#include <hal/rtc_io_hal.h>
+#include <hal/rtc_io_periph.h>
 #include <drivers/custom_piezo.h>
 
 LOG_MODULE_REGISTER(custom_piezo, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct custom_piezo_config {
-    struct pwm_dt_spec pwm;
+    struct dac_dt_spec dac;
 };
 
 struct custom_piezo_data {
@@ -17,6 +24,18 @@ struct custom_piezo_data {
     const struct device *dev;
     bool is_playing;
 };
+
+static void custom_piezo_rtc_pad_init(dac_channel_t channel)
+{
+    RTCIO.pad_dac[channel].mux_sel = 0;
+    RTCIO.pad_dac[channel].fun_sel = 0;
+    RTCIO.pad_dac[channel].fun_ie = 0;
+    RTCIO.pad_dac[channel].slp_sel = 0;
+    RTCIO.pad_dac[channel].slp_ie = 0;
+    RTCIO.pad_dac[channel].slp_oe = 0;
+    RTCIO.pad_dac[channel].rue = 0;
+    RTCIO.pad_dac[channel].rde = 0;
+}
 
 static int custom_piezo_stop_impl(const struct device *dev)
 {
@@ -27,12 +46,11 @@ static int custom_piezo_stop_impl(const struct device *dev)
         return 0;
     }
 
-    int ret = pwm_set(config->pwm.dev, config->pwm.channel,
-                      config->pwm.period, 0, config->pwm.flags);
-    if (ret < 0) {
-        LOG_ERR("Failed to stop piezo PWM: %d", ret);
-        return ret;
-    }
+    dac_channel_t channel = (dac_channel_t)config->dac.channel_id;
+    dac_ll_cw_enable_channel(channel, false);
+    dac_ll_cw_generator_disable();
+    dac_ll_power_down(channel);
+    clk_ll_rc_fast_disable();
 
     data->is_playing = false;
     k_work_cancel_delayable(&data->stop_work);
@@ -57,14 +75,37 @@ static int custom_piezo_play_impl(const struct device *dev, uint32_t freq_hz, ui
         return custom_piezo_stop_impl(dev);
     }
 
-    uint32_t period_ns = PWM_NSEC(1000000000U / freq_hz);
-    uint32_t pulse_ns = period_ns / 2U;
-    int ret = pwm_set(config->pwm.dev, config->pwm.channel,
-                      period_ns, pulse_ns, config->pwm.flags);
-    if (ret < 0) {
-        LOG_ERR("Failed to start piezo PWM: %d", ret);
-        return ret;
+    if (freq_hz < 130U) {
+        LOG_ERR("Piezo frequency must be at least 130 Hz");
+        return -EINVAL;
     }
+
+    dac_channel_t channel = (dac_channel_t)config->dac.channel_id;
+    gpio_num_t gpio_num = channel == DAC_CHAN_0 ? GPIO_NUM_25 : GPIO_NUM_26;
+    int rtcio_num = rtc_io_num_map[gpio_num];
+
+    if (rtcio_num < 0) {
+        LOG_ERR("DAC GPIO %d is not an RTCIO pin", gpio_num);
+        return -EINVAL;
+    }
+
+    rtcio_hal_function_select(rtcio_num, RTCIO_LL_FUNC_RTC);
+    rtcio_hal_iomux_func_sel(rtcio_num, RTCIO_LL_PIN_FUNC);
+    rtcio_hal_input_disable(rtcio_num);
+    rtcio_hal_output_disable(rtcio_num);
+    rtcio_hal_pullup_disable(rtcio_num);
+    rtcio_hal_pulldown_disable(rtcio_num);
+
+    clk_ll_rc_fast_enable();
+    dac_ll_power_on(channel);
+    custom_piezo_rtc_pad_init(channel);
+    dac_ll_rtc_sync_by_adc(false);
+    dac_ll_cw_set_freq(freq_hz, 8000000U);
+    dac_ll_cw_set_atten(channel, DAC_COSINE_ATTEN_DB_0);
+    dac_ll_cw_set_phase(channel, DAC_COSINE_PHASE_0);
+    dac_ll_cw_set_dc_offset(channel, 0);
+    dac_ll_cw_enable_channel(channel, true);
+    dac_ll_cw_generator_enable();
 
     data->is_playing = true;
     k_work_reschedule(&data->stop_work, K_MSEC(duration_ms));
@@ -82,9 +123,19 @@ static int custom_piezo_init(const struct device *dev)
     struct custom_piezo_data *data = dev->data;
     const struct custom_piezo_config *config = dev->config;
 
-    if (!pwm_is_ready_dt(&config->pwm)) {
-        LOG_ERR("Piezo PWM device is not ready");
+    if (!device_is_ready(config->dac.dev)) {
+        LOG_ERR("Piezo DAC device is not ready");
         return -ENODEV;
+    }
+
+    struct dac_channel_cfg channel_cfg = {
+        .channel_id = config->dac.channel_id,
+        .resolution = 8,
+    };
+    int ret = dac_channel_setup(config->dac.dev, &channel_cfg);
+    if (ret < 0) {
+        LOG_ERR("Failed to configure piezo DAC channel: %d", ret);
+        return ret;
     }
 
     data->dev = dev;
@@ -98,7 +149,7 @@ static int custom_piezo_init(const struct device *dev)
 #define PIEZO_INIT(inst)                                                       \
     static struct custom_piezo_data piezo_data_##inst;                         \
     static const struct custom_piezo_config piezo_cfg_##inst = {               \
-        .pwm = PWM_DT_SPEC_INST_GET(inst),                                     \
+        .dac = DAC_DT_SPEC_INST_GET(inst),                                     \
     };                                                                         \
     DEVICE_DT_INST_DEFINE(inst,                                                \
                           custom_piezo_init,                                   \
