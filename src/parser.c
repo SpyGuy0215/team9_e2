@@ -61,6 +61,21 @@ void parser_thread_entry(void *p1, void *p2, void *p3){
             errno = 0;
             long angle = strtol(line, &end, 10);
 
+            if (line[0] != '\0' && errno == 0 && angle > 0 &&
+                *end == 's' && end[1] == '\0') {
+                struct piezo_cmd cmd = {
+                    .duration_seconds = (uint32_t)angle
+                };
+
+                if (k_msgq_put(&piezo_msgq, &cmd, K_NO_WAIT) != 0) {
+                    printk("[Parser] Warning: Piezo queue full, dropping command\n");
+                } else {
+                    printk("[Parser] Piezo command queued: duration=%u seconds\n",
+                           cmd.duration_seconds);
+                }
+                continue;
+            }
+
             while (isspace((unsigned char)*end)) {
                 end++;
             }

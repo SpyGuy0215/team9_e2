@@ -15,10 +15,10 @@ void system_two_entry(void *p1, void *p2, void *p3)
     ARG_UNUSED(p2);
     ARG_UNUSED(p3);
 
-    printk("[System Two] System Two thread started.\n");
+    printk("[System Two] System Two thread started with custom servo driver.\n");
 
     if (!device_is_ready(servo)) {
-        printk("[System Two] Servo device is not ready.\n");
+        printk("[System Two] WARN: Servo device is not ready.\n");
         return;
     }
 

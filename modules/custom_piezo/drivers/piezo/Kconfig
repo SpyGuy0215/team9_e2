@@ -1,0 +1,6 @@
+config CUSTOM_PIEZO
+    bool "Custom Piezo DAC Driver"
+    default y
+    depends on DT_HAS_CUSTOM_PIEZO_DAC_ENABLED
+    help
+      Enable the custom piezo DAC driver for generating tones.

@@ -4,6 +4,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/printk.h>
 #include <drivers/servo_motor.h>
 
 LOG_MODULE_REGISTER(servo_motor, CONFIG_LOG_DEFAULT_LEVEL);
@@ -41,11 +42,17 @@ static int servo_motor_init(const struct device *dev)
 
     if (!pwm_is_ready_dt(&config->pwm)) {
         LOG_ERR("PWM device %s is not ready", config->pwm.dev->name);
+        printk("[Servo] PWM device %s is not ready.\n", config->pwm.dev->name);
         return -ENODEV;
     }
 
     /* Set default neutral position (90 degrees) on boot */
-    return servo_motor_set_angle(dev, 90);
+    int ret = servo_motor_set_angle(dev, 90);
+    if (ret < 0) {
+        printk("[Servo] Initial PWM setup failed: %d.\n", ret);
+    }
+
+    return ret;
 }
 
 static const struct servo_motor_driver_api servo_motor_api = {

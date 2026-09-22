@@ -1,6 +1,7 @@
 / {
     aliases {
         led0 = &blink_led;
+        system-piezo = &piezo0; 
     };
 
     /* Instantiate custom RGB Drivers */
@@ -23,9 +24,15 @@
     servo0: servo_motor {
         compatible = "custom,servo-motor";
         pwms = <&ledc0 0 PWM_HZ(50) PWM_POLARITY_NORMAL>;
-        min-pulse-us = <1000>;
-        max-pulse-us = <2000>;
+        min-pulse-us = <500>;
+        max-pulse-us = <2500>;
         status = "okay";
+    };
+
+    piezo0: piezo {
+        compatible = "custom,piezo-dac";
+        status = "okay";
+        pwms = <&ledc0 1 PWM_HZ(1000) PWM_POLARITY_NORMAL>;
     };
 };
 
@@ -34,13 +41,25 @@
     pinctrl-0 = <&ledc0_default>;
     pinctrl-names = "default"; 
     status = "okay"; 
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel0@0 {
+        reg = <0>;
+        timer = <0>;
+    };
+
+    channel1@1 {
+        reg = <1>;
+        timer = <1>;
+    };
 };
 
 /* Pin control mapping (Assign GPIO pin for servo PWM output) */
 &pinctrl {
     ledc0_default: ledc0_default {
         group1 {
-            pinmux = <LEDC_CH0_GPIO13>;
+            pinmux = <LEDC_CH0_GPIO27>, <LEDC_CH1_GPIO25>;
         };
     };
 };

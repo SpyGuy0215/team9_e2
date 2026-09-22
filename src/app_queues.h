@@ -13,7 +13,12 @@ struct servo_cmd {
     uint16_t angle;
 };
 
+struct piezo_cmd {
+    uint32_t duration_seconds;
+};
+
 extern struct k_msgq rgb_msgq;
 extern struct k_msgq servo_msgq;
+extern struct k_msgq piezo_msgq;
 
 #endif /* APP_QUEUES_H_ */
