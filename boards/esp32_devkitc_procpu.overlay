@@ -34,6 +34,12 @@
         status = "okay";
         pwms = <&ledc0 1 PWM_HZ(1000) PWM_POLARITY_NORMAL>;
     };
+
+    usart0: system-four-usart {
+        compatible = "custom,usart";
+        status = "okay";
+        uart = <&uart0>;
+    };
 };
 
 /* Enable ESP32 hardware controller ledc0 */

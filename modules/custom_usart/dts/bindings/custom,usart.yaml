@@ -1,0 +1,10 @@
+description: Custom polling USART driver
+compatible: "custom,usart"
+
+include: base.yaml
+
+properties:
+  uart:
+    type: phandle
+    required: true
+    description: UART peripheral used by the custom USART driver.

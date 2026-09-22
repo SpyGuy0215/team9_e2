@@ -17,6 +17,13 @@ struct piezo_cmd {
     uint32_t duration_seconds;
 };
 
+#define SERIAL_MESSAGE_SIZE 128
+
+struct serial_msg {
+    char data[SERIAL_MESSAGE_SIZE];
+};
+
+extern struct k_msgq serial_msgq;
 extern struct k_msgq rgb_msgq;
 extern struct k_msgq servo_msgq;
 extern struct k_msgq piezo_msgq;

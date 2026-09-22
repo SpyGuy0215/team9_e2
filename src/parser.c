@@ -1,5 +1,4 @@
 #include <zephyr/kernel.h>
-#include <zephyr/console/console.h>
 #include <zephyr/sys/printk.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,12 +19,15 @@ void parser_thread_entry(void *p1, void *p2, void *p3){
     ARG_UNUSED(p2);
     ARG_UNUSED(p3);
 
-    console_getline_init();    // init reader
     printk("[Parser] Parser thread started.\n");
 
     while(1){
-        char *line = console_getline();
-        if(line == NULL) continue; 
+        struct serial_msg message;
+        if (k_msgq_get(&serial_msgq, &message, K_FOREVER) != 0) {
+            continue;
+        }
+
+        char *line = message.data;
 
         trim_trailing(line);
 
@@ -80,7 +82,7 @@ void parser_thread_entry(void *p1, void *p2, void *p3){
                 end++;
             }
 
-            if (line[0] != '\0' && *end == '\0' && errno == 0 &&
+            if (line[0] != '\0' && *end == 'a' && end[1] == '\0' && errno == 0 &&
                 angle >= 0 && angle <= 180) {
                 struct servo_cmd cmd = {.angle = (uint16_t)angle};
 
